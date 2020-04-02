@@ -1,4 +1,4 @@
-.. inverter documentation master file.
+.. murmann_adc_survey_analyzer documentation master file.
    You can adapt this file completely to your liking, 
    but it should at least contain the root `toctree` directive.
 
@@ -6,7 +6,7 @@
    :maxdepth: 3
    :caption: Contents:
 
-.. automodule:: inverter
+.. automodule:: murmann_adc_survey_analyzer
    :members:
    :undoc-members:
 

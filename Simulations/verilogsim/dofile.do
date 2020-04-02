@@ -1,7 +1,7 @@
 add wave -position insertpoint  \
-sim/:tb_inverter:A \
-sim/:tb_inverter:initdone \
-sim/:tb_inverter:clock \
-sim/:tb_inverter:Z \
+sim/:tb_murmann_adc_survey_analyzer:A \
+sim/:tb_murmann_adc_survey_analyzer:initdone \
+sim/:tb_murmann_adc_survey_analyzer:clock \
+sim/:tb_murmann_adc_survey_analyzer:Z \
 
 run -all

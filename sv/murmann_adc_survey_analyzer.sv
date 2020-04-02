@@ -1,4 +1,4 @@
-module inverter( input reset,
+module murmann_adc_survey_analyzer( input reset,
                  input A, 
                  output Z );
 //reset does nothing
