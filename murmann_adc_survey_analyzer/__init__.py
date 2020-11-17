@@ -126,11 +126,14 @@ class murmann_adc_survey_analyzer(thesdk):
         handles, labels = ax.get_legend_handles_labels()
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         fig = plt.gcf()
-        ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.15,labelspacing=0.3,handletextpad=0.1,\
-                borderaxespad=0.2,handlelength=1,framealpha=0.6,edgecolor='w',\
-                fontsize=plt.rcParams['legend.fontsize']-1)
+        #ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.15,labelspacing=0.3,handletextpad=0.1,\
+        #        borderaxespad=0.2,handlelength=1,framealpha=0.7,edgecolor='w',\
+        #        fontsize=plt.rcParams['legend.fontsize']-1)
+        #ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.2,labelspacing=0.4,handletextpad=0.15,\
+        #        borderaxespad=0.25,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
+        ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
 
-    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None):
+    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None,grayscale=True):
         '''
         Plot an FoM scatter plot.
 
@@ -169,16 +172,15 @@ class murmann_adc_survey_analyzer(thesdk):
         '''
         from matplotlib.axes._axes import _log as matplotlib_axes_logger
         matplotlib_axes_logger.setLevel('ERROR')
-        if legend:
-            fig,ax = plt.subplots(constrained_layout=False)
-            plt.tight_layout()
-        else:
-            fig,ax = plt.subplots()
+        fig,ax = plt.subplots(constrained_layout=False)
+        plt.tight_layout()
         if 'x' in log:
             plt.xscale('log')
             plt.grid(True,which='both',axis='x')
         if 'y' in log:
             plt.yscale('log')
+        markers = ['o','s','^','v','<','>','+','x','D','p','P','X','.']
+        markerdict = {}
         ax.margins(x=0.05)
         tmpdict = copy.deepcopy(self.db.copy())
         archs = tmpdict['ISSCC']['ARCHITECTURE']+tmpdict['VLSI']['ARCHITECTURE']
@@ -235,39 +237,34 @@ class murmann_adc_survey_analyzer(thesdk):
                 if k.lower().startswith(ydata.lower()):
                     ykey = k
                     break
-            xvec = val[xkey]
-            yvec = val[ykey]
-            xvec = [np.nan if x == '' else float(x) for x in xvec]
-            yvec = [np.nan if y == '' else float(y) for y in yvec]
-            labelvec = []
-            colorvec = []
-            for i in range(len(xvec)):
-                x = xvec[i]
-                y = yvec[i]
-                arch = val['ARCHITECTURE'][i]
-                if arch == '':
+            xvec,yvec = val[xkey],val[ykey]
+            xvec = np.array([np.nan if x == '' else float(x) for x in xvec])
+            yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
+            labelvec,colorvec = [],[]
+            for arch in unique_arch:
+                idcs = np.where(np.array(val['ARCHITECTURE'])==arch)[0]
+                if len(idcs) == 0:
                     continue
-                # Fix in database?
-                if arch == 'SAR TI':
-                    arch = 'SAR, TI'
-                color = cmap(unique_arch.index(arch)/len(unique_arch))
-                labelvec.append(arch)
-                colorvec.append(color)
-                marker = 'o' if key == 'ISSCC' else 's'
+                if arch not in markerdict:
+                    markerdict[arch] = markers.pop(0)
                 if not legend:
-                    plt.scatter(x,y,c='k',label=arch,marker='o')
+                    plt.plot(xvec[idcs],yvec[idcs],ls='none',c='k',label=arch,marker='o')
                 else:
-                    plt.scatter(x,y,c=color,label=arch,marker='o')
+                    if not grayscale:
+                        color = cmap(unique_arch.index(arch)/len(unique_arch))
+                        plt.plot(xvec[idcs],yvec[idcs],ls='none',c=color,label=arch,marker='o')
+                    else:
+                        plt.plot(xvec[idcs],yvec[idcs],ls='none',marker=markerdict[arch],fillstyle='none',c='k',label=arch)
         if datapoints is not None:
             if not isinstance(datapoints,list):
                 datapoints = [datapoints]
             for d in datapoints:
-                msize = (plt.rcParams['lines.markersize']*2)**2
+                msize = plt.rcParams['lines.markersize']*1.5
                 if len(d) > 2:
                     label = d[2]
                 else:
                     label = 'This Work'
-                plt.scatter(d[0],d[1],c='r',label=label,marker='*',s=msize)
+                plt.plot(d[0],d[1],ls='none',c='r',label=label,marker='*',ms=msize)
         if legend:
             self._legend_without_duplicate_labels(ax)
         if plt.rcParams['text.usetex']:
