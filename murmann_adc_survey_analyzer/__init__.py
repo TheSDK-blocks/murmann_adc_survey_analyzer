@@ -121,24 +121,24 @@ class murmann_adc_survey_analyzer(thesdk):
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         fig = plt.gcf()
         ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.15,labelspacing=0.3,handletextpad=0.1,\
-                borderaxespad=0.2,handlelength=1,framealpha=0.5,fontsize=plt.rcParams['legend.fontsize']-1)
+                borderaxespad=0.2,handlelength=1,framealpha=0.6,edgecolor='w',\
+                fontsize=plt.rcParams['legend.fontsize']-1)
 
     def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None,label=None):
         from matplotlib.axes._axes import _log as matplotlib_axes_logger
         matplotlib_axes_logger.setLevel('ERROR')
         if legend:
-            self.legendscale = 1.0
+            fig,ax = plt.subplots(constrained_layout=False)
+            plt.tight_layout()
         else:
-            self.legendscale = 1.0
-        figsize = plt.rcParams['figure.figsize']
-        fig,ax = plt.subplots(figsize=(figsize[0]/self.legendscale,figsize[1]),constrained_layout=False)
+            fig,ax = plt.subplots()
         if 'x' in log:
             plt.xscale('log')
             plt.grid(True,which='both',axis='x')
         if 'y' in log:
             plt.yscale('log')
+        ax.margins(x=0.05)
         tmpdict = copy.deepcopy(self.db.copy())
-        archs = []
         archs = tmpdict['ISSCC']['ARCHITECTURE']+tmpdict['VLSI']['ARCHITECTURE']
         unique_arch = list(np.unique(archs))
         unique_arch.remove('')
@@ -205,13 +205,17 @@ class murmann_adc_survey_analyzer(thesdk):
                 arch = val['ARCHITECTURE'][i]
                 if arch == '':
                     continue
+                # Fix in database?
                 if arch == 'SAR TI':
                     arch = 'SAR, TI'
                 color = cmap(unique_arch.index(arch)/len(unique_arch))
                 labelvec.append(arch)
                 colorvec.append(color)
                 marker = 'o' if key == 'ISSCC' else 's'
-                plt.scatter(x,y,c=color,label=arch,marker='o')
+                if not legend:
+                    plt.scatter(x,y,c='k',label=arch,marker='o')
+                else:
+                    plt.scatter(x,y,c=color,label=arch,marker='o')
         if datapoints is not None:
             if not isinstance(datapoints,list):
                 datapoints = [datapoints]
@@ -220,14 +224,18 @@ class murmann_adc_survey_analyzer(thesdk):
                 plt.scatter(d[0],d[1],c='r',label=label,marker='*',s=msize)
         if legend:
             self._legend_without_duplicate_labels(ax)
-            plt.tight_layout()
-            #plt.subplots_adjust(right=0.7)
         if plt.rcParams['text.usetex']:
             plt.xlabel(xkey.replace('_','\_'))
             plt.ylabel(ykey.replace('_','\_'))
         else:
             plt.xlabel(xkey)
             plt.ylabel(ykey)
+        if 'year' in xkey.lower():
+            from matplotlib.ticker import MaxNLocator
+            ax = plt.gca()
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xticks(rotation=30)
+            plt.setp(ax.get_xticklabels(), ha="right")
         if self.export[0]:
             plt.savefig("%s_scatter.pdf"%self.export[1],format='pdf',bbox_inches='tight')
         if self.plot:
