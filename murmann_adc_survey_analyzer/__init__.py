@@ -101,6 +101,9 @@ class murmann_adc_survey_analyzer(thesdk):
         subprocess.check_output(command, shell=True);
 
     def process_csv(self):
+        '''
+        Process the CSV files to a dictionary.
+        '''
         self.db = {}
         for key,val in self.databasefiles.items():
             header = True
@@ -117,6 +120,9 @@ class murmann_adc_survey_analyzer(thesdk):
                         self.db[key][k].append(row[i])
 
     def _legend_without_duplicate_labels(self,ax):
+        '''
+        Adds legend with unique entries to the scatter plot.
+        '''
         handles, labels = ax.get_legend_handles_labels()
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         fig = plt.gcf()
@@ -124,7 +130,43 @@ class murmann_adc_survey_analyzer(thesdk):
                 borderaxespad=0.2,handlelength=1,framealpha=0.6,edgecolor='w',\
                 fontsize=plt.rcParams['legend.fontsize']-1)
 
-    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None,label=None):
+    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None):
+        '''
+        Plot an FoM scatter plot.
+
+        Parameters
+        ----------
+
+        xdata : str, default 'fsnyq'
+            Column header matching the x-axis data. This is matched to the
+            start of the column header (case insensitive). For example,
+            'fomw_hf' matches to 'FOMW_hf [fJ/conv-step]'.
+        ydata : str, default 'fomw_hf'
+            Column header matching the y-axis data. This is matched to the
+            start of the column header (case insensitive).
+        log : str, optional, default ''
+            Set x- or y-axis to logarithmic scale. Possible values are 'x','y'
+            and 'xy'.
+        cond : tuple or list(tuple), optional, default None
+            Give conditions to filter out points from the scatter plot. The
+            conditions are given as tuples with 3 elements each. The tuple is
+            formed as (key,condition,value), where the key is matched to a
+            column header in the same way as for xdata and ydata, condition is
+            a string from {'<','<=','==','!=','>=','>'}, and value is a value
+            in the same units as the column data. Multiple conditions can be
+            given by wrapping the tuples in a list. If the condition value is a
+            string, it is matched as 'key.contains(value)' (case sensitive). 
+        legend : bool, default True
+            Flag to turn legend on or off. When legend is off, the datapoints
+            are black.
+        datapoints : tuple or list(tuple), default None
+            Hilighted datapoints to be added to the plot (not in the survey).
+            The tuple(s) should be pairs of (x,y), where the units of both x
+            and y match the units of xdata and ydata. The datapoint can be
+            labeled by including a third element in the tuple as (x,y,label).
+            Default label is 'This Work'.
+
+        '''
         from matplotlib.axes._axes import _log as matplotlib_axes_logger
         matplotlib_axes_logger.setLevel('ERROR')
         if legend:
@@ -221,6 +263,10 @@ class murmann_adc_survey_analyzer(thesdk):
                 datapoints = [datapoints]
             for d in datapoints:
                 msize = (plt.rcParams['lines.markersize']*2)**2
+                if len(d) > 2:
+                    label = d[2]
+                else:
+                    label = 'This Work'
                 plt.scatter(d[0],d[1],c='r',label=label,marker='*',s=msize)
         if legend:
             self._legend_without_duplicate_labels(ax)
@@ -237,7 +283,9 @@ class murmann_adc_survey_analyzer(thesdk):
             plt.xticks(rotation=30)
             plt.setp(ax.get_xticklabels(), ha="right")
         if self.export[0]:
-            plt.savefig("%s_scatter.pdf"%self.export[1],format='pdf',bbox_inches='tight')
+            fname = "%s_scatter.pdf"%self.export[1]
+            self.print_log(type='I',msg='Saving figure to \'%s\'.' % fname)
+            plt.savefig(fname,format='pdf',bbox_inches='tight')
         if self.plot:
             plt.show(block=False)
         else:
