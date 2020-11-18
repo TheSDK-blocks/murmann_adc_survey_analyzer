@@ -106,12 +106,12 @@ class murmann_adc_survey_analyzer(thesdk):
         '''
         self.db = {}
         for key,val in self.databasefiles.items():
-            header = True
+            firstrow = True
             reader = csv.reader(open(val, 'r'))
             self.db[key] = {}
             for row in reader:
-                if header:
-                    header = False
+                if firstrow:
+                    firstrow = False
                     for title in row:
                         self.db[key][title] = []
                 else:
@@ -124,16 +124,14 @@ class murmann_adc_survey_analyzer(thesdk):
         Adds legend with unique entries to the scatter plot.
         '''
         handles, labels = ax.get_legend_handles_labels()
+        if len(handles) == 0:
+            return
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         fig = plt.gcf()
-        #ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.15,labelspacing=0.3,handletextpad=0.1,\
-        #        borderaxespad=0.2,handlelength=1,framealpha=0.7,edgecolor='w',\
-        #        fontsize=plt.rcParams['legend.fontsize']-1)
-        #ax.legend(*zip(*unique),loc=2,frameon=True,borderpad=0.2,labelspacing=0.4,handletextpad=0.15,\
-        #        borderaxespad=0.25,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
         ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
 
-    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,legend=True,datapoints=None,grayscale=True):
+    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,group=None,\
+            legend=True,datapoints=None,grayscale=False):
         '''
         Plot an FoM scatter plot.
 
@@ -159,19 +157,24 @@ class murmann_adc_survey_analyzer(thesdk):
             in the same units as the column data. Multiple conditions can be
             given by wrapping the tuples in a list. If the condition value is a
             string, it is matched as 'key.contains(value)' (case sensitive). 
+        group : list(str), default None
+            Manual grouping of ADC architectures. A group is created for each
+            entry in the list. Architectures matching several groups are
+            grouped into a separate group automatically (up to 2 overlaps).
         legend : bool, default True
-            Flag to turn legend on or off. When legend is off, the datapoints
-            are black.
+            Flag to turn legend on or off. Legend entries include architectures
+            filtered by either cond or group, and manually hilighted datapoints.
         datapoints : tuple or list(tuple), default None
             Hilighted datapoints to be added to the plot (not in the survey).
             The tuple(s) should be pairs of (x,y), where the units of both x
             and y match the units of xdata and ydata. The datapoint can be
             labeled by including a third element in the tuple as (x,y,label).
             Default label is 'This Work'.
+        grayscale : bool, default False
+            Flag to turn plot colors on or off. When grayscale is enabled, the
+            ADC architectures are grouped by marker style rather than color.
 
         '''
-        from matplotlib.axes._axes import _log as matplotlib_axes_logger
-        matplotlib_axes_logger.setLevel('ERROR')
         fig,ax = plt.subplots(constrained_layout=False)
         plt.tight_layout()
         if 'x' in log:
@@ -240,21 +243,72 @@ class murmann_adc_survey_analyzer(thesdk):
             xvec,yvec = val[xkey],val[ykey]
             xvec = np.array([np.nan if x == '' else float(x) for x in xvec])
             yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
-            labelvec,colorvec = [],[]
             for arch in unique_arch:
                 idcs = np.where(np.array(val['ARCHITECTURE'])==arch)[0]
                 if len(idcs) == 0:
                     continue
-                if arch not in markerdict:
-                    markerdict[arch] = markers.pop(0)
-                if not legend:
-                    plt.plot(xvec[idcs],yvec[idcs],ls='none',c='k',label=arch,marker='o')
-                else:
-                    if not grayscale:
-                        color = cmap(unique_arch.index(arch)/len(unique_arch))
-                        plt.plot(xvec[idcs],yvec[idcs],ls='none',c=color,label=arch,marker='o')
+                color = 'k'
+                altcolor = None
+                marker = '.'
+                label = None
+                fs = 'full'
+                mew = 0
+                ms = 1
+                zorder = 1
+                if group is not None:
+                    # Manual grouping
+                    nmatch = 0
+                    for h in group:
+                        if h in arch:
+                            nmatch += 1
+                            zorder = 1.5
+                            if grayscale:
+                                color = 'k'
+                                mew = 1
+                                marker = markers[group.index(h)]
+                                fs = 'none'
+                                if nmatch > 1:
+                                    marker = markers[len(h)+group.index(h)+group.index(label)]
+                            else:
+                                ms = 1.2
+                                if nmatch > 1:
+                                    altcolor = color
+                                    fs = 'right'
+                                color = cmap(group.index(h)/len(h))
+                                marker = 'o'
+                            if nmatch > 1:
+                                label += ', %s' % h
+                            else:
+                                label = h
+                elif cond is not None:
+                    # Grouping based on given conditions
+                    label = arch
+                    if grayscale:
+                        if arch not in markerdict:
+                            try:
+                                markerdict[arch] = markers.pop(0)
+                            except:
+                                markerdict[arch] = '.'
+                                self.print_log(type='W',msg='Ran out of markers. Filter architectures or use manual grouping.')
+                        marker = markerdict[arch]
+                        mew = 1
+                        color = 'k'
+                        fs = 'none'
                     else:
-                        plt.plot(xvec[idcs],yvec[idcs],ls='none',marker=markerdict[arch],fillstyle='none',c='k',label=arch)
+                        ms = 1.2
+                        marker = 'o'
+                        color = cmap(unique_arch.index(arch)/len(unique_arch))
+                        fs = 'full'
+                else:
+                    # No grouping
+                    marker = 'o'
+                    if grayscale:
+                        color = 'k'
+                    else:
+                        color = cmap(unique_arch.index(arch)/len(unique_arch))
+                plt.plot(xvec[idcs],yvec[idcs],ls='none',marker=marker,\
+                        fillstyle=fs,c=color,markerfacecoloralt=altcolor,markeredgewidth=mew,\
+                        label=label,ms=plt.rcParams['lines.markersize']*ms,zorder=zorder)
         if datapoints is not None:
             if not isinstance(datapoints,list):
                 datapoints = [datapoints]
@@ -264,7 +318,8 @@ class murmann_adc_survey_analyzer(thesdk):
                     label = d[2]
                 else:
                     label = 'This Work'
-                plt.plot(d[0],d[1],ls='none',c='r',label=label,marker='*',ms=msize)
+                plt.plot(d[0],d[1],ls='none',c='r',label=label,marker='*',ms=msize,\
+                        markeredgewidth=0.5)
         if legend:
             self._legend_without_duplicate_labels(ax)
         if plt.rcParams['text.usetex']:
