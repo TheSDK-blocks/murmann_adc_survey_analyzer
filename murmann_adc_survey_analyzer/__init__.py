@@ -1,7 +1,7 @@
 """
-========
+===========================
 Murmann ADC survey analyzer
-========
+===========================
 
 This entity provides an analyzer for Boris Murman ADCSyrvey at
 
@@ -40,7 +40,7 @@ class murmann_adc_survey_analyzer(thesdk):
         return os.path.dirname(os.path.realpath(__file__)) + "/"+__name__
 
     def __init__(self,*arg): 
-        self.print_log(type='I', msg='Inititalizing %s' %(__name__)) 
+        self.print_log(type='I', msg='Initializing %s' %(__name__)) 
 
         self.db = {}
         self.plot = True
@@ -54,7 +54,12 @@ class murmann_adc_survey_analyzer(thesdk):
         self.init()
 
     def init(self):
-        pass #Currently nohing to add
+        try:
+            self.download()
+            self.extract_csv()
+            self.process_csv()
+        except:
+            self.print_log(type='E',msg='Failed initializing ADC survey data.')
 
     @property
     def _classfile(self):
@@ -63,7 +68,7 @@ class murmann_adc_survey_analyzer(thesdk):
 
     @property
     def revision(self):
-        '''This should be eventually fetched form the vwebsite.
+        '''This should be eventually fetched form the website.
 
         '''
         self._revision='20200401'
@@ -85,8 +90,7 @@ class murmann_adc_survey_analyzer(thesdk):
             subprocess.check_output(command, shell=True);
 
     def extract_csv(self):
-        '''Extract CSV files frm the database database'''
-        
+        '''Extract CSV files from the database database'''
         for key,value in self.databasefiles.items():
             if key is 'ISSCC':
                 sheet=1
@@ -101,8 +105,7 @@ class murmann_adc_survey_analyzer(thesdk):
         subprocess.check_output(command, shell=True);
 
     def process_csv(self):
-        '''
-        Process the CSV files to a dictionary.
+        '''Process the CSV files to a dictionary.
         '''
         self.db = {}
         for key,val in self.databasefiles.items():
@@ -120,8 +123,7 @@ class murmann_adc_survey_analyzer(thesdk):
                         self.db[key][k].append(row[i])
 
     def _legend_without_duplicate_labels(self,ax):
-        '''
-        Adds legend with unique entries to the scatter plot.
+        '''Adds legend with unique entries to the scatter plot.
         '''
         handles, labels = ax.get_legend_handles_labels()
         if len(handles) == 0:
@@ -134,58 +136,71 @@ class murmann_adc_survey_analyzer(thesdk):
             fontsize = 'small'
         ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=fontsize)
 
-    def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,group=None,\
-            simplify_group=False,legend=True,datapoints=None,grayscale=False):
+    def plot_fom(self,**kwargs):
         '''Plot an FoM scatter plot.
 
         Parameters
         ----------
-
-        xdata : str, default 'fsnyq'
-            Column header matching the x-axis data. This is matched to the
-            start of the column header (case insensitive). For example,
-            'fomw_hf' matches to 'FOMW_hf [fJ/conv-step]'.
-        ydata : str, default 'fomw_hf'
-            Column header matching the y-axis data. This is matched to the
-            start of the column header (case insensitive).
-        log : str, optional, default ''
-            Set x- or y-axis to logarithmic scale. Possible values are 'x','y'
-            and 'xy'.
-        cond : tuple or list(tuple), optional, default None
-            Give conditions to filter out points from the scatter plot. The
-            conditions are given as tuples with 3 elements each. The tuple is
-            formed as (key,condition,value), where the key is matched to a
-            column header in the same way as for xdata and ydata, condition is
-            a string from {'<','<=','==','!=','>=','>'}, and value is a value
-            in the same units as the column data. Multiple conditions can be
-            given by wrapping the tuples in a list. If the condition value is a
-            string, it is matched as 'key.contains(value)' (case sensitive). 
-        group : list(str), default None
-            Manual grouping of ADC architectures. A group is created for each
-            entry in the list. Architectures matching several groups are
-            grouped into a separate group automatically (up to 2 overlaps).
-            This functionality can be turned off with simplify_group.
-        simplify_group : bool, default False
-            Flag to simplify grouping based on entries in group. If True, the
-            secondary groups, i.e. combinations of entries, are not separated.
-            In this case, the order of group entries defines the 'dominant'
-            group. For example, 'SAR, TI' can be shown as just 'TI' or 'SAR' if
-            both are enabled, depending on the order. 
-        legend : bool, default True
-            Flag to turn legend on or off. Legend entries include architectures
-            filtered by either cond or group, and manually hilighted datapoints.
-        datapoints : tuple or list(tuple), default None
-            Hilighted datapoints to be added to the plot (not in the survey).
-            The tuple(s) should be pairs of (x,y), where the units of both x
-            and y match the units of xdata and ydata. The datapoint can be
-            labeled by including a third element in the tuple as (x,y,label).
-            Default label is 'This Work'.
-        grayscale : bool, default False
-            Flag to turn plot colors on or off. When grayscale is enabled, the
-            ADC architectures are grouped by marker style rather than color.
+        **kwargs :
+            xdata : str, default 'fsnyq'
+                Column header matching the x-axis data. This is matched to the
+                start of the column header (case insensitive). For example,
+                'fomw_hf' matches to 'FOMW_hf [fJ/conv-step]'.
+            ydata : str, default 'fomw_hf'
+                Column header matching the y-axis data. This is matched to the
+                start of the column header (case insensitive).
+            log : str, optional, default ''
+                Set x- or y-axis to logarithmic scale. Possible values are
+                'x','y' and 'xy'.
+            cond : tuple or list(tuple), optional, default None
+                Give conditions to filter out points from the scatter plot. The
+                conditions are given as tuples with 3 elements each. The tuple
+                is formed as (key,condition,value), where the key is matched to
+                a column header in the same way as for xdata and ydata,
+                condition is a string from {'<','<=','==','!=','>=','>'}, and
+                value is a value in the same units as the column data. Multiple
+                conditions can be given by wrapping the tuples in a list. If
+                the condition value is a string, it is matched as
+                'key.contains(value)' (case sensitive). 
+            group : list(str), default None
+                Manual grouping of ADC architectures. A group is created for
+                each entry in the list. Architectures matching several groups
+                are grouped into a separate group automatically (up to 2
+                overlaps).  This functionality can be turned off with
+                simplify_group.
+            simplify_group : bool, default False
+                Flag to simplify grouping based on entries in group. If True,
+                the secondary groups, i.e. combinations of entries, are not
+                separated.  In this case, the order of group entries defines
+                the 'dominant' group. For example, 'SAR, TI' can be shown as
+                just 'TI' or 'SAR' if both are enabled, depending on the order. 
+            legend : bool, default True
+                Flag to turn legend on or off. Legend entries include
+                architectures filtered by either cond or group, and manually
+                hilighted datapoints.
+            datapoints : tuple or list(tuple), default None
+                Hilighted datapoints to be added to the plot (not in the
+                survey).  The tuple(s) should be pairs of (x,y), where the
+                units of both x and y match the units of xdata and ydata. The
+                datapoint can be labeled by including a third element in the
+                tuple as (x,y,label).  Default label is 'This Work'.
+            grayscale : bool, default False
+                Flag to turn plot colors on or off. When grayscale is enabled,
+                the ADC architectures are grouped by marker style rather than
+                color.
 
         '''
-        fig,ax = plt.subplots(constrained_layout=False)
+        xdata = kwargs.get('xdata','fsnyq')
+        ydata = kwargs.get('ydata','fomw_hf')
+        log = kwargs.get('log','')
+        cond = kwargs.get('cond',None)
+        group = kwargs.get('group',None)
+        simplify_group = kwargs.get('simplify_group',False)
+        legend = kwargs.get('legend',True)
+        datapoints = kwargs.get('datapoints',None)
+        grayscale = kwargs.get('grayscale',False)
+
+        fig,ax = plt.subplots()
         plt.grid(True)
         ax.set_axisbelow(True)
         if 'x' in log:
@@ -344,7 +359,6 @@ class murmann_adc_survey_analyzer(thesdk):
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xticks(rotation=30)
             plt.setp(ax.get_xticklabels(), ha="right")
-        plt.tight_layout()
         if self.export[0]:
             fname = "%s_scatter.pdf"%self.export[1]
             self.print_log(type='I',msg='Saving figure to %s.' % fname)
@@ -358,6 +372,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     from  murmann_adc_survey_analyzer import *
     import pdb
+    # Example plot format settings, these are optional
     plt.rcParams['font.weight'] = 'normal'
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
@@ -385,9 +400,6 @@ if __name__=="__main__":
     plt.rcParams['figure.figsize'] = (3.5,2.0)
     plt.rcParams['figure.dpi'] = 150
     a=murmann_adc_survey_analyzer()
-    a.download()
-    a.extract_csv()
-    a.process_csv()
     cond = []
     cond.append(('fsnyq','>=',100e6))
     cond.append(('fsnyq','<=',5e9))
