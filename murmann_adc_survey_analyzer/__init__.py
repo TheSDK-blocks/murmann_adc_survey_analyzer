@@ -188,6 +188,9 @@ class murmann_adc_survey_analyzer(thesdk):
                 Flag to turn plot colors on or off. When grayscale is enabled,
                 the ADC architectures are grouped by marker style rather than
                 color.
+            colormap : str, default 'jet'
+                Colormap to be used for color picking. See matplotlib colormaps
+                for options.
 
         '''
         xdata = kwargs.get('xdata','fsnyq')
@@ -199,8 +202,9 @@ class murmann_adc_survey_analyzer(thesdk):
         legend = kwargs.get('legend',True)
         datapoints = kwargs.get('datapoints',None)
         grayscale = kwargs.get('grayscale',False)
+        colormap = kwargs.get('colormap','jet')
 
-        fig,ax = plt.subplots()
+        fig,ax = plt.subplots(constrained_layout=True)
         plt.grid(True)
         ax.set_axisbelow(True)
         if 'x' in log:
@@ -214,7 +218,8 @@ class murmann_adc_survey_analyzer(thesdk):
         archs = tmpdict['ISSCC']['ARCHITECTURE']+tmpdict['VLSI']['ARCHITECTURE']
         unique_arch = list(np.unique(archs))
         unique_arch.remove('')
-        cmap = plt.cm.get_cmap('jet',len(unique_arch))
+        unique_arch = sorted(unique_arch)
+        cmap = plt.cm.get_cmap(colormap,len(unique_arch))
         for key,val in tmpdict.items():
             # Remove entries not matching conditions
             if cond is not None:
@@ -296,10 +301,14 @@ class murmann_adc_survey_analyzer(thesdk):
                                     marker = markers[len(h)+group.index(h)+group.index(label)]
                             else:
                                 ms = 1.2
+                                print('----')
+                                print(arch,color,altcolor)
                                 if not simplify_group and nmatch > 1:
                                     altcolor = color
                                     fs = 'right'
-                                color = cmap(group.index(h)/len(h))
+                                color = cmap((group.index(h)+1)/(2*len(h)))
+                                #color = cmap(unique_arch.index(arch)/len(unique_arch))
+                                print(arch,color,altcolor)
                                 marker = 'o'
                             if not simplify_group and nmatch > 1:
                                 label += ', %s' % h
@@ -361,6 +370,9 @@ class murmann_adc_survey_analyzer(thesdk):
             plt.setp(ax.get_xticklabels(), ha="right")
         if self.export[0]:
             fname = "%s_scatter.pdf"%self.export[1]
+            fpath = os.path.dirname(fname) 
+            if not os.path.exists(fpath):
+                os.makedirs(fpath)
             self.print_log(type='I',msg='Saving figure to %s.' % fname)
             plt.savefig(fname,format='pdf',bbox_inches='tight')
         if self.plot:
@@ -406,8 +418,13 @@ if __name__=="__main__":
     cond.append(('fomw_hf','<=',1000))
     group = ['TI','SAR','VCO']
     gs = False
+    a.export=(True,'../figures/1')
+    a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
+    a.export=(True,'../figures/2')
     a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
+    a.export=(True,'../figures/3')
     a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
+    a.export=(True,'../figures/4')
     a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
 
     input()
