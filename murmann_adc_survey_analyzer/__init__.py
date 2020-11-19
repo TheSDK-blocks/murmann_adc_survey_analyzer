@@ -131,7 +131,7 @@ class murmann_adc_survey_analyzer(thesdk):
         ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
 
     def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,group=None,\
-            legend=True,datapoints=None,grayscale=False):
+            simplify_group=False,legend=True,datapoints=None,grayscale=False):
         '''
         Plot an FoM scatter plot.
 
@@ -161,6 +161,13 @@ class murmann_adc_survey_analyzer(thesdk):
             Manual grouping of ADC architectures. A group is created for each
             entry in the list. Architectures matching several groups are
             grouped into a separate group automatically (up to 2 overlaps).
+            This functionality can be turned off with simplify_group.
+        simplify_group : bool, default False
+            Flag to simplify grouping based on entries in group. If True, the
+            secondary groups, i.e. combinations of entries, are not separated.
+            In this case, the order of group entries defines the 'dominant'
+            group. For example, 'SAR, TI' can be shown as just 'TI' or 'SAR' if
+            both are enabled, depending on the order. 
         legend : bool, default True
             Flag to turn legend on or off. Legend entries include architectures
             filtered by either cond or group, and manually hilighted datapoints.
@@ -271,12 +278,12 @@ class murmann_adc_survey_analyzer(thesdk):
                                     marker = markers[len(h)+group.index(h)+group.index(label)]
                             else:
                                 ms = 1.2
-                                if nmatch > 1:
+                                if not simplify_group and nmatch > 1:
                                     altcolor = color
                                     fs = 'right'
                                 color = cmap(group.index(h)/len(h))
                                 marker = 'o'
-                            if nmatch > 1:
+                            if not simplify_group and nmatch > 1:
                                 label += ', %s' % h
                             else:
                                 label = h
