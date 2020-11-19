@@ -301,14 +301,10 @@ class murmann_adc_survey_analyzer(thesdk):
                                     marker = markers[len(h)+group.index(h)+group.index(label)]
                             else:
                                 ms = 1.2
-                                print('----')
-                                print(arch,color,altcolor)
                                 if not simplify_group and nmatch > 1:
                                     altcolor = color
                                     fs = 'right'
                                 color = cmap((group.index(h)+1)/(2*len(h)))
-                                #color = cmap(unique_arch.index(arch)/len(unique_arch))
-                                print(arch,color,altcolor)
                                 marker = 'o'
                             if not simplify_group and nmatch > 1:
                                 label += ', %s' % h
