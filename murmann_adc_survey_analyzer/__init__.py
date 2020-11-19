@@ -128,12 +128,15 @@ class murmann_adc_survey_analyzer(thesdk):
             return
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
         fig = plt.gcf()
-        ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=plt.rcParams['legend.fontsize']-2)
+        try:
+            fontsize = plt.rcParams['legend.fontsize']-2
+        except:
+            fontsize = 'small'
+        ax.legend(*zip(*unique),loc=2,handlelength=1,fontsize=fontsize)
 
     def plot_fom(self,xdata='fsnyq',ydata='fomw_hf',log='',cond=None,group=None,\
             simplify_group=False,legend=True,datapoints=None,grayscale=False):
-        '''
-        Plot an FoM scatter plot.
+        '''Plot an FoM scatter plot.
 
         Parameters
         ----------
@@ -183,10 +186,10 @@ class murmann_adc_survey_analyzer(thesdk):
 
         '''
         fig,ax = plt.subplots(constrained_layout=False)
-        plt.tight_layout()
+        plt.grid(True)
+        ax.set_axisbelow(True)
         if 'x' in log:
             plt.xscale('log')
-            plt.grid(True,which='both',axis='x')
         if 'y' in log:
             plt.yscale('log')
         markers = ['o','s','^','v','<','>','+','x','D','p','P','X','.']
@@ -341,9 +344,10 @@ class murmann_adc_survey_analyzer(thesdk):
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             plt.xticks(rotation=30)
             plt.setp(ax.get_xticklabels(), ha="right")
+        plt.tight_layout()
         if self.export[0]:
             fname = "%s_scatter.pdf"%self.export[1]
-            self.print_log(type='I',msg='Saving figure to \'%s\'.' % fname)
+            self.print_log(type='I',msg='Saving figure to %s.' % fname)
             plt.savefig(fname,format='pdf',bbox_inches='tight')
         if self.plot:
             plt.show(block=False)
@@ -354,8 +358,44 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     from  murmann_adc_survey_analyzer import *
     import pdb
+    plt.rcParams['font.weight'] = 'normal'
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
+    plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['text.latex.preamble'] = [r'\usepackage{mathptmx}']
+    plt.rcParams['axes.labelsize'] = 10
+    plt.rcParams['axes.labelweight'] = 'normal'
+    plt.rcParams['axes.titleweight'] = 'normal'
+    plt.rcParams['axes.axisbelow'] = True
+    plt.rcParams['axes.grid'] = True
+    plt.rcParams['axes.grid.axis'] = 'both'
+    plt.rcParams['grid.color'] = '0.75'
+    plt.rcParams['lines.linewidth'] = 1
+    plt.rcParams['lines.markersize'] = 4
+    plt.rcParams['legend.fontsize'] = 9
+    plt.rcParams['legend.fancybox'] = False
+    plt.rcParams['legend.frameon'] = True
+    plt.rcParams['legend.framealpha'] = 1
+    plt.rcParams['legend.edgecolor'] = '0'
+    plt.rcParams['patch.linewidth'] = '0.5'
+    plt.rcParams['xtick.labelsize'] = 9
+    plt.rcParams['ytick.labelsize'] = 9
+    plt.rcParams['figure.titlesize'] = 10
+    plt.rcParams['figure.figsize'] = (3.5,2.0)
+    plt.rcParams['figure.dpi'] = 150
     a=murmann_adc_survey_analyzer()
     a.download()
     a.extract_csv()
+    a.process_csv()
+    cond = []
+    cond.append(('fsnyq','>=',100e6))
+    cond.append(('fsnyq','<=',5e9))
+    cond.append(('fomw_hf','<=',1000))
+    group = ['TI','SAR','VCO']
+    gs = False
+    a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
+    a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
+    a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
 
-    #input()
+    input()
