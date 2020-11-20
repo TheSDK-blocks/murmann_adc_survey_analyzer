@@ -343,7 +343,7 @@ class murmann_adc_survey_analyzer(thesdk):
             if not isinstance(datapoints,list):
                 datapoints = [datapoints]
             for d in datapoints:
-                msize = plt.rcParams['lines.markersize']*1.5
+                msize = plt.rcParams['lines.markersize']*1.75
                 if len(d) > 2:
                     label = d[2]
                 else:
@@ -352,6 +352,8 @@ class murmann_adc_survey_analyzer(thesdk):
                         markeredgewidth=0.5)
         if legend:
             self._legend_without_duplicate_labels(ax)
+        xkey = xkey.replace('[','(').replace(']',')')
+        ykey = ykey.replace('[','(').replace(']',')')
         if plt.rcParams['text.usetex']:
             plt.xlabel(xkey.replace('_','\_'))
             plt.ylabel(ykey.replace('_','\_'))
@@ -422,5 +424,13 @@ if __name__=="__main__":
     a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
     a.export=(True,'../figures/4')
     a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
+    a.export=(True,'../figures/5')
+    a.plot_fom(xdata='fin_hf',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
+    cond = []
+    cond.append(('fin_hf','>=',100e6))
+    cond.append(('architecture','==','TI'))
+    cond.append(('year','>',2010))
+    a.export=(True,'../figures/6')
+    a.plot_fom(xdata='fin_hf',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs,legend=False)
 
     input()
