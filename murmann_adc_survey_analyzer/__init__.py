@@ -68,7 +68,7 @@ class murmann_adc_survey_analyzer(thesdk):
 
     @property
     def revision(self):
-        '''This should be eventually fetched form the website.
+        '''This should be eventually fetched from the website.
 
         '''
         self._revision='20200401'
@@ -141,18 +141,18 @@ class murmann_adc_survey_analyzer(thesdk):
 
         Parameters
         ----------
-        **kwargs :
-            xdata : str, default 'fsnyq'
+        **kwargs:
+            xdata: str, default 'fsnyq'
                 Column header matching the x-axis data. This is matched to the
                 start of the column header (case insensitive). For example,
                 'fomw_hf' matches to 'FOMW_hf [fJ/conv-step]'.
-            ydata : str, default 'fomw_hf'
+            ydata: str, default 'fomw_hf'
                 Column header matching the y-axis data. This is matched to the
                 start of the column header (case insensitive).
-            log : str, optional, default ''
+            log: str, optional, default ''
                 Set x- or y-axis to logarithmic scale. Possible values are
                 'x','y' and 'xy'.
-            cond : tuple or list(tuple), optional, default None
+            cond: tuple or list(tuple), optional, default None
                 Give conditions to filter out points from the scatter plot. The
                 conditions are given as tuples with 3 elements each. The tuple
                 is formed as (key,condition,value), where the key is matched to
@@ -162,33 +162,33 @@ class murmann_adc_survey_analyzer(thesdk):
                 conditions can be given by wrapping the tuples in a list. If
                 the condition value is a string, it is matched as
                 'key.contains(value)' (case sensitive). 
-            group : list(str), default None
+            group: list(str), default None
                 Manual grouping of ADC architectures. A group is created for
                 each entry in the list. Architectures matching several groups
                 are grouped into a separate group automatically (up to 2
                 overlaps).  This functionality can be turned off with
                 simplify_group.
-            simplify_group : bool, default False
+            simplify_group: bool, default False
                 Flag to simplify grouping based on entries in group. If True,
                 the secondary groups, i.e. combinations of entries, are not
                 separated.  In this case, the order of group entries defines
                 the 'dominant' group. For example, 'SAR, TI' can be shown as
                 just 'TI' or 'SAR' if both are enabled, depending on the order. 
-            legend : bool, default True
+            legend: bool, default True
                 Flag to turn legend on or off. Legend entries include
                 architectures filtered by either cond or group, and manually
                 hilighted datapoints.
-            datapoints : tuple or list(tuple), default None
+            datapoints: tuple or list(tuple), default None
                 Hilighted datapoints to be added to the plot (not in the
                 survey).  The tuple(s) should be pairs of (x,y), where the
                 units of both x and y match the units of xdata and ydata. The
                 datapoint can be labeled by including a third element in the
                 tuple as (x,y,label).  Default label is 'This Work'.
-            grayscale : bool, default False
+            grayscale: bool, default False
                 Flag to turn plot colors on or off. When grayscale is enabled,
                 the ADC architectures are grouped by marker style rather than
                 color.
-            colormap : str, default 'jet'
+            colormap: str, default 'jet'
                 Colormap to be used for color picking. See matplotlib colormaps
                 for options.
 
