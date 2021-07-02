@@ -122,13 +122,16 @@ class murmann_adc_survey_analyzer(thesdk):
                     for i,k in enumerate(keys):
                         self.db[key][k].append(row[i])
 
-    def _legend_without_duplicate_labels(self,ax):
+    def _legend_without_duplicate_labels(self,ax,other):
         '''Adds legend with unique entries to the scatter plot.
         '''
         handles, labels = ax.get_legend_handles_labels()
         if len(handles) == 0:
             return
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+        if other:
+            oth = plt.Line2D([0],[0],color='black',linestyle='none',marker='.',mew=1,ms=1.2)
+            unique.append((oth,'Other'))
         fig = plt.gcf()
         try:
             fontsize = plt.rcParams['legend.fontsize']-2
@@ -178,6 +181,9 @@ class murmann_adc_survey_analyzer(thesdk):
                 Flag to turn legend on or off. Legend entries include
                 architectures filtered by either cond or group, and manually
                 hilighted datapoints.
+            other: bool, default True
+                Include entries outside of the groups into the plot under
+                category 'Other'.
             datapoints: tuple or list(tuple), default None
                 Hilighted datapoints to be added to the plot (not in the
                 survey).  The tuple(s) should be pairs of (x,y), where the
@@ -200,6 +206,7 @@ class murmann_adc_survey_analyzer(thesdk):
         group = kwargs.get('group',None)
         simplify_group = kwargs.get('simplify_group',False)
         legend = kwargs.get('legend',True)
+        other = kwargs.get('other',True)
         datapoints = kwargs.get('datapoints',None)
         grayscale = kwargs.get('grayscale',False)
         colormap = kwargs.get('colormap','jet')
@@ -211,7 +218,7 @@ class murmann_adc_survey_analyzer(thesdk):
             plt.xscale('log')
         if 'y' in log:
             plt.yscale('log')
-        markers = ['o','s','^','v','<','>','+','x','D','p','P','X','.']
+        markers = ['o','s','^','v','<','>','+','x','D','p','P','X']
         markerdict = {}
         ax.margins(x=0.05)
         tmpdict = copy.deepcopy(self.db.copy())
@@ -351,7 +358,7 @@ class murmann_adc_survey_analyzer(thesdk):
                 plt.plot(d[0],d[1],ls='none',c='r',label=label,marker='*',ms=msize,\
                         markeredgewidth=0.5)
         if legend:
-            self._legend_without_duplicate_labels(ax)
+            self._legend_without_duplicate_labels(ax,other)
         xkey = xkey.replace('[','(').replace(']',')')
         ykey = ykey.replace('[','(').replace(']',')')
         if plt.rcParams['text.usetex']:
