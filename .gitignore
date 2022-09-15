@@ -9,3 +9,7 @@ doc/build/*
 *.svn
 *.asv
 database/*
+simulations/
+states/
+figures/
+*log

@@ -279,7 +279,7 @@ class murmann_adc_survey_analyzer(thesdk):
                     break
             xvec,yvec = val[xkey],val[ykey]
             xvec = np.array([np.nan if x == '' else float(x) for x in xvec])
-            yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
+            yvec = np.array([np.nan if y == '' else (float(y)-1.76)/6.02 for y in yvec])
             for arch in unique_arch:
                 idcs = np.where(np.array(val['ARCHITECTURE'])==arch)[0]
                 if len(idcs) == 0:
@@ -362,8 +362,10 @@ class murmann_adc_survey_analyzer(thesdk):
         xkey = xkey.replace('[','(').replace(']',')')
         ykey = ykey.replace('[','(').replace(']',')')
         if plt.rcParams['text.usetex']:
-            plt.xlabel(xkey.replace('_','\_'))
-            plt.ylabel(ykey.replace('_','\_'))
+            plt.xlabel('$f_{s}$ (Hz)')
+            plt.ylabel('ENOB (bits)')
+            #plt.xlabel(xkey.replace('_','\_'))
+            #plt.ylabel(ykey.replace('_','\_'))
         else:
             plt.xlabel(xkey)
             plt.ylabel(ykey)
@@ -374,12 +376,12 @@ class murmann_adc_survey_analyzer(thesdk):
             plt.xticks(rotation=30)
             plt.setp(ax.get_xticklabels(), ha="right")
         if self.export[0]:
-            fname = "%s_scatter.pdf"%self.export[1]
+            fname = "%s_scatter.png"%self.export[1]
             fpath = os.path.dirname(fname) 
             if not os.path.exists(fpath):
                 os.makedirs(fpath)
             self.print_log(type='I',msg='Saving figure to %s.' % fname)
-            plt.savefig(fname,format='pdf',bbox_inches='tight')
+            plt.savefig(fname,format='png',bbox_inches='tight')
         if self.plot:
             plt.show(block=False)
         else:
@@ -423,16 +425,16 @@ if __name__=="__main__":
     cond.append(('fomw_hf','<=',1000))
     group = ['TI','SAR','VCO']
     gs = False
-    a.export=(True,'../figures/1')
+    a.export=(False,'../figures/1')
     a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
-    a.export=(True,'../figures/2')
+    a.export=(False,'../figures/2')
     a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
-    a.export=(True,'../figures/3')
+    a.export=(False,'../figures/3')
     a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
-    a.export=(True,'../figures/4')
+    a.export=(False,'../figures/4')
     a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
     a.export=(True,'../figures/5')
-    a.plot_fom(xdata='fin_hf',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
+    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
     cond = []
     cond.append(('fin_hf','>=',100e6))
     cond.append(('architecture','==','TI'))
