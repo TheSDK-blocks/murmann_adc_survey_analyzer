@@ -35,6 +35,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 class murmann_adc_survey_analyzer(thesdk):
+    '''
+    Initially written by Okko Järvinen, modified by Santeri Porrasmaa 2022.
+
+    This TheSyDeKick module utilizes ADC survey data from a Git repository maintained by Boris Murmann.
+    The Git repository is included as a submodule within this entity.
+
+    This entity converts the survey data into two separate spreadsheets. One spreadsheet contains the
+    ADCs published in ISSCC and ADCs published in VLSI. The path for these files is set in self.databasefiles.
+
+    '''
     @property
     def _classfile(self):
         return os.path.dirname(os.path.realpath(__file__)) + "/"+__name__
@@ -55,7 +65,7 @@ class murmann_adc_survey_analyzer(thesdk):
 
     def init(self):
         try:
-            self.download()
+            #self.download()
             self.extract_csv()
             self.process_csv()
         except:
@@ -68,40 +78,64 @@ class murmann_adc_survey_analyzer(thesdk):
 
     @property
     def revision(self):
-        '''This should be eventually fetched from the website.
-
         '''
-        self._revision='20200401'
+        Use the latest revision available by default. Change if need be.
+        '''
+        if not hasattr(self, '_revision'):
+            self._revision='latest'
         return self._revision
+
+    @revision.setter
+    def revision(self, val):
+        self._revision=val
+
+    @property
+    def dbpath(self):
+        if not hasattr(self, '_dbpath'):
+            self._dbpath=os.path.join(self.entitypath, 'databases')
+            if not os.path.isdir(self._dbpath):
+                self.print_log(type='I',msg='Creating directory %s' %self._dbpath)
+                os.makedirs(self._dbpath)
+        return self._dbpath
+
+    @dbpath.setter
+    def dbpath(self,val):
+        self._dbpath=val
+        if not os.path.isdir(self._dbpath):
+            self.print_log(type='I',msg='Creating directory %s' %self._dbpath)
+            os.makedirs(self._dbpath)
 
     @property
     def databasefiles(self): 
-        self._databasefiles={ key : self.entitypath+'/database/'
-                +self.revision + '_' + key +'.csv' for key in [ 'ISSCC', 'VLSI'  ] }
+        '''
+        Paths for output databases. One for ISSCC, one for VLSI.
+        '''
+        self._databasefiles={ key : os.path.join(self.dbpath,
+                self.revision + '_' + key +'.csv') for key in ['ISSCC', 'VLSI'] }
         return self._databasefiles
 
-    def download(self):
-        '''Downloads the case database'''
-        xlsfile=self.entitypath+ '/database/ADC_survey_rev' +self.revision+'.xls'
-        if not os.path.exists(xlsfile):
-            command= ('wget "https://web.stanford.edu/~murmann/publications/ADCsurvey_rev'
-               + self.revision+'.xls" -O ' + xlsfile )
-            self.print_log(type='I', msg='Executing %s \n' %(command))
-            subprocess.check_output(command, shell=True);
+    #def download(self):
+    #    '''Downloads the case database'''
+    #    xlsfile=self.entitypath+ '/database/ADC_survey_rev' +self.revision+'.xls'
+    #    if not os.path.exists(xlsfile):
+    #        command= ('wget "https://web.stanford.edu/~murmann/publications/ADCsurvey_rev'
+    #           + self.revision+'.xls" -O ' + xlsfile )
+    #        self.print_log(type='I', msg='Executing %s \n' %(command))
+    #        subprocess.check_output(command, shell=True);
 
     def extract_csv(self):
         '''Extract CSV files from the database database'''
         for key,value in self.databasefiles.items():
-            if key is 'ISSCC':
+            if key == 'ISSCC':
                 sheet=1
-            elif key is 'VLSI':
+            elif key == 'VLSI':
                 sheet=2
-            command=('ssconvert -S '+ self.entitypath + '/database/ADC_survey_rev'+self.revision 
-                    + '.xls ' +
-                    self.entitypath + '/database/tmpfile.csv  && mv '
-                    + self.entitypath + '/database/tmpfile.csv.%s ' %(sheet) + value )
+            xlspath = os.path.join(self.entitypath, 'ADC-survey', 'xls', 'ADCsurvey_%s.xls' % self.revision)
+            tempdb = os.path.join(self.dbpath, 'tmpfile.csv')
+            command=('ssconvert -S '+ xlspath + ' ' + '%s ' % tempdb
+                    + '&& mv %s.%d %s' % (tempdb, sheet, value) )
             subprocess.check_output(command, shell=True);
-        command=('rm -f ' + self.entitypath + '/database/tmpfile.csv*')
+        command=('rm -f ' + tempdb + '*')
         subprocess.check_output(command, shell=True);
 
     def process_csv(self):
@@ -224,7 +258,8 @@ class murmann_adc_survey_analyzer(thesdk):
         tmpdict = copy.deepcopy(self.db.copy())
         archs = tmpdict['ISSCC']['ARCHITECTURE']+tmpdict['VLSI']['ARCHITECTURE']
         unique_arch = list(np.unique(archs))
-        unique_arch.remove('')
+        if '' in unique_arch:
+            unique_arch.remove('')
         unique_arch = sorted(unique_arch)
         cmap = plt.cm.get_cmap(colormap,len(unique_arch))
         for key,val in tmpdict.items():
@@ -279,7 +314,8 @@ class murmann_adc_survey_analyzer(thesdk):
                     break
             xvec,yvec = val[xkey],val[ykey]
             xvec = np.array([np.nan if x == '' else float(x) for x in xvec])
-            yvec = np.array([np.nan if y == '' else (float(y)-1.76)/6.02 for y in yvec])
+            yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
+            #yvec = np.array([np.nan if y == '' else (float(y)-1.76)/6.02 for y in yvec])
             for arch in unique_arch:
                 idcs = np.where(np.array(val['ARCHITECTURE'])==arch)[0]
                 if len(idcs) == 0:
@@ -362,10 +398,8 @@ class murmann_adc_survey_analyzer(thesdk):
         xkey = xkey.replace('[','(').replace(']',')')
         ykey = ykey.replace('[','(').replace(']',')')
         if plt.rcParams['text.usetex']:
-            plt.xlabel('$f_{s}$ (Hz)')
-            plt.ylabel('ENOB (bits)')
-            #plt.xlabel(xkey.replace('_','\_'))
-            #plt.ylabel(ykey.replace('_','\_'))
+            plt.xlabel(xkey.replace('_','\_'))
+            plt.ylabel(ykey.replace('_','\_'))
         else:
             plt.xlabel(xkey)
             plt.ylabel(ykey)
@@ -397,7 +431,7 @@ if __name__=="__main__":
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
     plt.rcParams['mathtext.fontset'] = 'dejavuserif'
     plt.rcParams['text.usetex'] = True
-    plt.rcParams['text.latex.preamble'] = [r'\usepackage{mathptmx}']
+    plt.rcParams['text.latex.preamble'] = r"\usepackage{mathptmx}"
     plt.rcParams['axes.labelsize'] = 10
     plt.rcParams['axes.labelweight'] = 'normal'
     plt.rcParams['axes.titleweight'] = 'normal'
@@ -418,6 +452,7 @@ if __name__=="__main__":
     plt.rcParams['figure.titlesize'] = 10
     plt.rcParams['figure.figsize'] = (3.5,2.0)
     plt.rcParams['figure.dpi'] = 150
+
     a=murmann_adc_survey_analyzer()
     cond = []
     cond.append(('fsnyq','>=',100e6))
