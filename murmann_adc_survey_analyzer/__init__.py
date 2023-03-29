@@ -235,6 +235,8 @@ class murmann_adc_survey_analyzer(thesdk):
         '''
         xdata = kwargs.get('xdata','fsnyq')
         ydata = kwargs.get('ydata','fomw_hf')
+        xlabel = kwargs.get('xlabel',None)
+        ylabel = kwargs.get('ylabel',None)
         log = kwargs.get('log','')
         cond = kwargs.get('cond',None)
         group = kwargs.get('group',None)
@@ -314,8 +316,13 @@ class murmann_adc_survey_analyzer(thesdk):
                     break
             xvec,yvec = val[xkey],val[ykey]
             xvec = np.array([np.nan if x == '' else float(x) for x in xvec])
-            yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
-            #yvec = np.array([np.nan if y == '' else (float(y)-1.76)/6.02 for y in yvec])
+            if ylabel:
+                if 'enob' in ylabel.lower() and 'sndr' in ykey.lower():
+                    yvec = np.array([np.nan if y == '' else (float(y)-1.76)/6.02 for y in yvec])
+                else:
+                    yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
+            else:
+                yvec = np.array([np.nan if y == '' else float(y) for y in yvec])
             for arch in unique_arch:
                 idcs = np.where(np.array(val['ARCHITECTURE'])==arch)[0]
                 if len(idcs) == 0:
@@ -385,18 +392,32 @@ class murmann_adc_survey_analyzer(thesdk):
         if datapoints is not None:
             if not isinstance(datapoints,list):
                 datapoints = [datapoints]
-            for d in datapoints:
+            if not isinstance(datapoint_markers, list):
+                datapoint_markers=[datapoint_markers]
+            if len(datapoint_markers)>len(datapoints):
+                datapoint_markers = datapoint_markers[:len(datapoints)]
+                self.print_log(type='I', msg='Length of datapoint markers exceeds data point length! Truncating.')
+            elif len(datapoint_markers)<len(datapoints):
+                datapoint_markers = [datapoint_markers[0] for i in range(len(datapoints))]
+                self.print_log(type='I', msg='Length of datapoint markers less than data point length, using same marker for all points!')
+            for mark, d in zip(datapoint_markers, datapoints):
                 msize = plt.rcParams['lines.markersize']*1.75
                 if len(d) > 2:
                     label = d[2]
                 else:
                     label = 'This Work'
-                plt.plot(d[0],d[1],ls='none',c='r',label=label,marker='*',ms=msize,\
+                plt.plot(d[0],d[1],ls='none',c='r',label=label,marker=mark,ms=msize,\
                         markeredgewidth=0.5)
         if legend:
             self._legend_without_duplicate_labels(ax,other)
-        xkey = xkey.replace('[','(').replace(']',')')
-        ykey = ykey.replace('[','(').replace(']',')')
+        if xlabel:
+            xkey = xlabel
+        else:
+            xkey = xkey.replace('[','(').replace(']',')')
+        if ylabel:
+            ykey = ylabel
+        else:
+            ykey = ykey.replace('[','(').replace(']',')')
         if plt.rcParams['text.usetex']:
             plt.xlabel(xkey.replace('_','\_'))
             plt.ylabel(ykey.replace('_','\_'))
