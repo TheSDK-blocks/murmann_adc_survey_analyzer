@@ -217,6 +217,11 @@ class murmann_adc_survey_analyzer(thesdk):
                 units of both x and y match the units of xdata and ydata. The
                 datapoint can be labeled by including a third element in the
                 tuple as (x,y,label).  Default label is 'This Work'.
+            datapoint_markers: list(str), default None
+                Markers for datapoints. Useful for differentiating between different
+                datapoints. Argument should be a list of strings, where each element
+                indicates the marker type be used (see Matplotlib documentation,
+                list of available markers).
             grayscale: bool, default False
                 Flag to turn plot colors on or off. When grayscale is enabled,
                 the ADC architectures are grouped by marker style rather than
@@ -488,4 +493,11 @@ if __name__=="__main__":
     a.export=(True,'../figures/fomw_vs_fs')
     # Plot Walden FoM vs. sample rate with options given above
     a.plot_fom(xdata='fs',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp)
+    
+    # Example of using datapoints
+    a.export=(True, '../figures/fomw_vs_fs_this_work')
+    datapoints = (10e9, 25)
+    datapoint_markers = ['D']
+    a.plot_fom(xdata='fs',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp, datapoints=datapoints, datapoint_markers=datapoint_markers)
+
     input()
