@@ -244,6 +244,7 @@ class murmann_adc_survey_analyzer(thesdk):
         legend = kwargs.get('legend',True)
         other = kwargs.get('other',True)
         datapoints = kwargs.get('datapoints',None)
+        datapoint_markers = kwargs.get('datapoint_markers', ['*'])
         grayscale = kwargs.get('grayscale',False)
         colormap = kwargs.get('colormap','jet')
 
@@ -476,26 +477,35 @@ if __name__=="__main__":
 
     a=murmann_adc_survey_analyzer()
     cond = []
-    cond.append(('fsnyq','>=',100e6))
-    cond.append(('fsnyq','<=',5e9))
+    cond.append(('fsnyq','>=',0.1e9))
+    cond.append(('fsnyq','<=',20e9))
     cond.append(('fomw_hf','<=',1000))
-    group = ['TI','SAR','VCO']
+    cond.append(('type','==','NQ'))
+    simplify_grp=True
     gs = False
-    a.export=(False,'../figures/1')
-    a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
-    a.export=(False,'../figures/2')
-    a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
-    a.export=(False,'../figures/3')
-    a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
-    a.export=(False,'../figures/4')
-    a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
-    a.export=(True,'../figures/5')
-    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
-    cond = []
-    cond.append(('fin_hf','>=',100e6))
-    cond.append(('architecture','==','TI'))
-    cond.append(('year','>',2010))
-    a.export=(True,'../figures/6')
-    a.plot_fom(xdata='fin_hf',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs,legend=False)
+    #a.export=(False,'../figures/1')
+    #a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
+    #a.export=(False,'../figures/2')
+    #a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
+    #a.export=(False,'../figures/3')
+    #a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
+    #a.export=(False,'../figures/4')
+    #a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
+    #a.export=(True,'../figures/5')
+    #a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
+    #cond = []
+    #cond.append(('fin_hf','>=',100e6))
+    #cond.append(('architecture','==','TI'))
+    #cond.append(('year','>',2010))
+    group = ['Pipe','SAR']
+    a.export=(True,'../figures/fomw_vs_fs')
+    a.plot_fom(xdata='fs',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp)
+    a.export=(True,'../figures/enob_vs_fs')
+    datapoints = [(4e9, 10, 'Target (slow)'), (12e9, 8, 'Target (fast)')]
+    datapoint_markers = ["*", "D"]
+    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp, ylabel='ENOB (b)', datapoints=datapoints, datapoint_markers=datapoint_markers)
+    a.export=(True,'../figures/sndr_vs_fs')
+    #group = ['Pipe, TI','SAR, TI']
+    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp)
 
     input()
