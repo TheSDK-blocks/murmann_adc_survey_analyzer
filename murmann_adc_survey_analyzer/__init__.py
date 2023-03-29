@@ -4,8 +4,8 @@ Murmann ADC survey analyzer
 ===========================
 
 This entity provides an analyzer for Boris Murman ADCSyrvey at
-
-https://web.stanford.edu/~murmann/publications/ADCsurvey_rev20200401.xls
+https://github.com/bmurmann/ADC-survey, which is included as
+a submodule wihtin this repository.
 
 Current docstring documentation style is Numpy
 https://numpydoc.readthedocs.io/en/latest/format.html
@@ -36,10 +36,11 @@ import matplotlib.pyplot as plt
 
 class murmann_adc_survey_analyzer(thesdk):
     '''
-    Initially written by Okko Järvinen, modified by Santeri Porrasmaa 2022.
+    Initially written by Okko Järvinen, modified by Santeri Porrasmaa.
 
     This TheSyDeKick module utilizes ADC survey data from a Git repository maintained by Boris Murmann.
-    The Git repository is included as a submodule within this entity.
+    The Git repo can be found at https://github.com/bmurmann/ADC-survey and is also included as a
+    submodule within this repository.
 
     This entity converts the survey data into two separate spreadsheets. One spreadsheet contains the
     ADCs published in ISSCC and one the ADCs published in VLSI. The path for these files is set in self.databasefiles.
@@ -67,7 +68,6 @@ class murmann_adc_survey_analyzer(thesdk):
 
     def init(self):
         try:
-            #self.download()
             self.extract_csv()
             self.process_csv()
         except:
