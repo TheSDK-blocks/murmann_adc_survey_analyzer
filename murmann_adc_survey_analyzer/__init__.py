@@ -42,7 +42,9 @@ class murmann_adc_survey_analyzer(thesdk):
     The Git repository is included as a submodule within this entity.
 
     This entity converts the survey data into two separate spreadsheets. One spreadsheet contains the
-    ADCs published in ISSCC and ADCs published in VLSI. The path for these files is set in self.databasefiles.
+    ADCs published in ISSCC and one the ADCs published in VLSI. The path for these files is set in self.databasefiles.
+
+    See method plot_fom for plotting options
 
     '''
     @property
@@ -114,17 +116,8 @@ class murmann_adc_survey_analyzer(thesdk):
                 self.revision + '_' + key +'.csv') for key in ['ISSCC', 'VLSI'] }
         return self._databasefiles
 
-    #def download(self):
-    #    '''Downloads the case database'''
-    #    xlsfile=self.entitypath+ '/database/ADC_survey_rev' +self.revision+'.xls'
-    #    if not os.path.exists(xlsfile):
-    #        command= ('wget "https://web.stanford.edu/~murmann/publications/ADCsurvey_rev'
-    #           + self.revision+'.xls" -O ' + xlsfile )
-    #        self.print_log(type='I', msg='Executing %s \n' %(command))
-    #        subprocess.check_output(command, shell=True);
-
     def extract_csv(self):
-        '''Extract CSV files from the database database'''
+        '''Extract CSV files from the ISSCC and VLSI databases'''
         for key,value in self.databasefiles.items():
             if key == 'ISSCC':
                 sheet=1
@@ -477,35 +470,22 @@ if __name__=="__main__":
 
     a=murmann_adc_survey_analyzer()
     cond = []
+    # Compare ADCs with sample rate greater than 100M ...
     cond.append(('fsnyq','>=',0.1e9))
+    # But smaller than 20 G...
     cond.append(('fsnyq','<=',20e9))
+    # and FoM smaller than 1000 fJ/step
     cond.append(('fomw_hf','<=',1000))
+    # choose ADCs of Nyquist rate only 
     cond.append(('type','==','NQ'))
-    simplify_grp=True
-    gs = False
-    #a.export=(False,'../figures/1')
-    #a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
-    #a.export=(False,'../figures/2')
-    #a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
-    #a.export=(False,'../figures/3')
-    #a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
-    #a.export=(False,'../figures/4')
-    #a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
-    #a.export=(True,'../figures/5')
-    #a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
-    #cond = []
-    #cond.append(('fin_hf','>=',100e6))
-    #cond.append(('architecture','==','TI'))
-    #cond.append(('year','>',2010))
+    # Choose architecture to be highlighted
     group = ['Pipe','SAR']
+    # group all ADCs in multiple categories (e.g. 'Pipe' and 'Pipe, TI' to same group)
+    simplify_grp=True
+    # Plot with color
+    gs = False
+    # Save figure
     a.export=(True,'../figures/fomw_vs_fs')
+    # Plot Walden FoM vs. sample rate with options given above
     a.plot_fom(xdata='fs',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp)
-    a.export=(True,'../figures/enob_vs_fs')
-    datapoints = [(4e9, 10, 'Target (slow)'), (12e9, 8, 'Target (fast)')]
-    datapoint_markers = ["*", "D"]
-    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp, ylabel='ENOB (b)', datapoints=datapoints, datapoint_markers=datapoint_markers)
-    a.export=(True,'../figures/sndr_vs_fs')
-    #group = ['Pipe, TI','SAR, TI']
-    a.plot_fom(xdata='fs',ydata='SNDR_hf',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp)
-
     input()
