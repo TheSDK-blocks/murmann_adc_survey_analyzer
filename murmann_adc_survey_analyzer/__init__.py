@@ -500,4 +500,16 @@ if __name__=="__main__":
     datapoint_markers = ['D']
     a.plot_fom(xdata='fs',log='x',cond=cond,grayscale=gs, group=group, simplify_group=simplify_grp, datapoints=datapoints, datapoint_markers=datapoint_markers)
 
+    # More examples:
+    a.export=(True,'../figures/1')
+    a.plot_fom(xdata='fsnyq',log='xy',grayscale=gs)
+    a.export=(True,'../figures/2')
+    a.plot_fom(xdata='fsnyq',log='xy',group=group,grayscale=gs)
+    a.export=(True,'../figures/3')
+    a.plot_fom(xdata='fsnyq',log='xy',cond=cond,group=group,grayscale=gs)
+    a.export=(True,'../figures/4')
+    a.plot_fom(xdata='year',log='y',cond=cond,group=group,grayscale=gs)
+    a.export=(True,'../figures/5')
+    a.plot_fom(xdata='fin_hf',ydata='SNDR_hf',log='x',group=group,grayscale=gs)
+
     input()
