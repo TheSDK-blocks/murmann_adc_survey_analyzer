@@ -58,6 +58,7 @@ class murmann_adc_survey_analyzer(thesdk):
         self.db = {}
         self.plot = True
         self.export = (False,'')
+        self.format = 'png'
 
         if len(arg)>=1:
             parent=arg[0]
@@ -430,12 +431,12 @@ class murmann_adc_survey_analyzer(thesdk):
             plt.xticks(rotation=30)
             plt.setp(ax.get_xticklabels(), ha="right")
         if self.export[0]:
-            fname = "%s_scatter.png"%self.export[1]
+            fname = "%s_scatter.%s"%(self.export[1],self.format)
             fpath = os.path.dirname(fname) 
             if not os.path.exists(fpath):
                 os.makedirs(fpath)
             self.print_log(type='I',msg='Saving figure to %s.' % fname)
-            plt.savefig(fname,format='png',bbox_inches='tight')
+            plt.savefig(fname,format=self.format,bbox_inches='tight')
         if self.plot:
             plt.show(block=False)
         else:
