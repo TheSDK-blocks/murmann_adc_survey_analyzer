@@ -123,7 +123,7 @@ class murmann_adc_survey_analyzer(thesdk):
                 sheet=1
             elif key == 'VLSI':
                 sheet=2
-            xlspath = os.path.join(self.entitypath, 'ADC-survey', 'xls', 'ADCsurvey_%s.xls' % self.revision)
+            xlspath = os.path.join(self.entitypath, 'ADC-survey', 'xls', 'ADCsurvey_%s.xlsx' % self.revision)
             tempdb = os.path.join(self.dbpath, 'tmpfile.csv')
             command=('ssconvert -S '+ xlspath + ' ' + '%s ' % tempdb
                     + '&& mv %s.%d %s' % (tempdb, sheet, value) )
